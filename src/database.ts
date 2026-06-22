@@ -1,7 +1,16 @@
 import sqlite3 from 'sqlite3';
 import * as path from 'path';
+import * as fs from 'fs';
 
-const DB_PATH = path.join(process.cwd(), 'database.sqlite');
+// Use data directory for database in production, current directory in development
+const DB_DIR = process.env.NODE_ENV === 'production' ? '/app/data' : process.cwd();
+const DB_PATH = path.join(DB_DIR, 'database.sqlite');
+
+// Ensure database directory exists
+const dbDir = path.dirname(DB_PATH);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
 
 // Open database connection
 export const db = new sqlite3.Database(DB_PATH, (err) => {

@@ -9,8 +9,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      # Mount database file for persistence
-      - ./database.sqlite:/app/database.sqlite
+      # Mount database directory for persistence
+      - ./data:/app/data
       # Mount logs directory for easy access
       - ./logs:/app/logs
     environment:

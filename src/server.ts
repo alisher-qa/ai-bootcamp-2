@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { dbGet } from './database';
+import { db, dbGet, dbRun } from './database';
 import logger from './logger';
 import crypto from 'crypto';
 
@@ -125,16 +125,63 @@ app.use((req: Request, res: Response) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
-// Start server
-app.listen(PORT, () => {
-  logger.info({
-    event: 'server_started',
-    port: PORT,
-    environment: process.env.NODE_ENV || 'development',
-  });
-  console.log(`\n🚀 AuthService is running on http://localhost:${PORT}`);
-  console.log(`📝 Logs are written to logs/app.log\n`);
-});
+// Initialize database and start server
+async function startServer() {
+  try {
+    // Initialize database tables
+    await dbRun(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'active',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Insert default test users if they don't exist
+    const testUsers = [
+      { email: 'test@test.com', password: 'password123', status: 'active' },
+      { email: 'blocked@test.com', password: 'password123', status: 'blocked' },
+      { email: 'admin@test.com', password: 'adminpass', status: 'active' },
+    ];
+
+    for (const user of testUsers) {
+      const existing = await new Promise<any>((resolve) => {
+        db.get('SELECT id FROM users WHERE email = ?', [user.email], (err, row) => {
+          resolve(row);
+        });
+      });
+
+      if (!existing) {
+        const passwordHash = hashPassword(user.password);
+        await dbRun(
+          'INSERT INTO users (email, password_hash, status) VALUES (?, ?, ?)',
+          [user.email, passwordHash, user.status]
+        );
+      }
+    }
+
+    app.listen(PORT, () => {
+      logger.info({
+        event: 'server_started',
+        port: PORT,
+        environment: process.env.NODE_ENV || 'development',
+      });
+      console.log(`\n🚀 AuthService is running on http://localhost:${PORT}`);
+      console.log(`📝 Logs are written to logs/app.log\n`);
+    });
+  } catch (error) {
+    logger.error({
+      event: 'startup_error',
+      error: error instanceof Error ? error.message : String(error),
+    });
+    process.exit(1);
+  }
+}
+
+startServer();
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

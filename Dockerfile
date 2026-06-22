@@ -30,7 +30,7 @@ RUN npm ci --only=production
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 
-# Create logs directory
+# Create logs and database directories
 RUN mkdir -p logs
 
 # Health check

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "auth-service-mcps": {
+      "command": "npx",
+      "args": ["ts-node", ".claude/mcps/index.ts"],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    }
+  }
+}

@@ -10,5 +10,6 @@
       "Bash(curl -s -X POST http://localhost:3000/login -H 'Content-Type: application/json' -d '{\"email\":\"notfound@test.com\",\"password\":\"password123\"}')",
       "Bash(curl -s -X POST http://localhost:3000/login -H 'Content-Type: application/json' -d '{\"email\":\"blocked@test.com\",\"password\":\"password123\"}')"
     ]
-  }
+  },
+  "enabledMcpjsonServers": ["auth-service-mcps"]
 }
